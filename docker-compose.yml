@@ -1,0 +1,58 @@
+services:
+  # Relational Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: lifeos-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: lifeos_user
+      POSTGRES_PASSWORD: lifeos_secure_password_123
+      POSTGRES_DB: lifeos_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lifeos_user -d lifeos_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Cache and Message Queue
+  redis:
+    image: redis:7-alpine
+    container_name: lifeos-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Vector Database for RAG & Semantic Memory
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: lifeos-qdrant
+    restart: always
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  qdrant_data:
+    driver: local
